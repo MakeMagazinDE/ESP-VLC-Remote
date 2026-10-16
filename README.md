@@ -10,13 +10,13 @@ Ein PIR-Bewegungsmelder am ESP32 startet eine in VLC geladene Videodatei auf ein
 
 ## Benötigt
 
-- Ein ESP32-Entwicklungsboard mit WLAN und einem freien digitalen Eingang
-- Ein PIR-Sensor mit digitalem Ausgang
+- Ein ESP32-Entwicklungsboard mit WLAN und einem freien digitalen Eingang (zB ESP32-WROOM32 von AZ Delivery)
+- Ein PIR-Sensor mit digitalem Ausgang (zB https://amzn.eu/d/0bcygTUC)
 - USB-Kabel mit Datenleitungen, Stromversorgung, Verbindungskabel
 - Ein Rechner mit VLC 3 und aktivierter HTTP-Weboberfläche
 - Arduino IDE mit dem Paket **esp32 by Espressif Systems**
 
-Für den einfachsten Nachbau wird ein klassisches ESP32-Devboard empfohlen. **WROOM ist nur eine Modulbezeichnung:** Auch ein anderes Modul mit klassischem ESP32-Chip kann passen. Entscheidend sind der tatsächliche Chip und die Pins, die das Board herausführt. Wähle in der Arduino IDE das tatsächlich verwendete Board; wenn es nicht gelistet ist, den generischen `ESP32-XX Dev Module` derselben Chipfamilie.
+Für den einfachsten Nachbau wird ein klassisches ESP32-Devboard empfohlen. Ich habe einen "ESP32-WROOM 32" von AZ Delivery verwendet. Entscheidend sind aber nur der tatsächliche Chip und die Pins, die das Board herausführt. Wähle in der Arduino IDE das tatsächlich verwendete Board; wenn es nicht gelistet ist, den generischen `ESP32-XX Dev Module` derselben Chipfamilie.
 
 ### Welches ESP32-Board?
 
@@ -27,7 +27,7 @@ Für den einfachsten Nachbau wird ein klassisches ESP32-Devboard empfohlen. **WR
 | ESP32-S3 | GPIO 27 ist meist für Flash/PSRAM reserviert. Einen geeigneten freien GPIO verwenden und `PIR_PIN` ändern | Mit GPIO 4 kompiliert; noch nicht am Gerät getestet |
 | Weitere ESP32 mit integriertem WLAN, z. B. S2 oder C6 | Chipfamilie in der IDE korrekt wählen und einen geeigneten Sensor-GPIO festlegen | Noch nicht getestet |
 
-Boards mit **ESP32-H2 oder ESP32-P4 ohne zusätzliches WLAN** eignen sich für diese WLAN-Version nicht. Bei unbekannten Boards zuerst die Chipbezeichnung und Pinbelegung des Herstellers nachsehen. Ein Pin mit derselben Zahl ist nicht bei jedem Board frei oder überhaupt vorhanden.
+Boards mit **ESP32-H2 oder ESP32-P4 ohne zusätzliches WLAN** eignen sich für diese Anwendungnicht.
 
 ## Sensor anschließen
 
@@ -42,9 +42,12 @@ Boards mit **ESP32-H2 oder ESP32-P4 ohne zusätzliches WLAN** eignen sich für d
 ## VLC vorbereiten
 
 1. Video in VLC öffnen und Vollbild einschalten.
-2. Unter **Einstellungen → Alle → Interface → Hauptinterfaces** das **Web**-Interface aktivieren. Unter **Hauptinterfaces → Lua** ein HTTP-Passwort setzen und VLC neu starten.
-3. Im Browser auf dem VLC-Rechner `http://127.0.0.1:8080/requests/status.json` öffnen. Bei der Anmeldung den Benutzernamen leer lassen und das VLC-Passwort eingeben.
-4. Vom Handy im selben Netz `http://RECHNER-IP:8080/requests/status.json` testen. Das muss funktionieren, bevor der ESP VLC erreichen kann. Firewall und WLAN-Gastnetze können den Zugriff verhindern.
+2. Webinterface aktivieren und ein Passwort vergeben:
+   - **macOS (VLC 3):** Im VLC-Menü **Einstellungen → Interface** öffnen. Im Abschnitt **HTTP Webinterface** die Option **HTTP Webinterface aktivieren** einschalten und direkt dort ein **Passwort** vergeben.
+   - **Windows (VLC 3):** **Werkzeuge/Tools → Einstellungen/Preferences** öffnen und unten **Alle/All** anzeigen. Unter **Interface → Hauptinterfaces/Main interfaces** **Web** aktivieren; unter **Hauptinterfaces → Lua → Lua HTTP** das Passwort setzen. Die Bezeichnungen können je nach Sprache und VLC-Version leicht abweichen.
+   Anschließend speichern und VLC neu starten.
+3. Im Browser auf dem VLC-Rechner `http://127.0.0.1:8080/requests/status.json` öffnen. Bei der Anmeldung den Benutzernamen leer lassen und das VLC-Passwort eingeben. Es sollten Status-Infos sichtbar sein.
+4. Vom Handy im selben Netz `http://RECHNER-IP:8080/requests/status.json` testen. So kann man testen, ob VLC auch wirklich im eigenen Netzwerk verfügbar ist. Firewall, aktiver VPN und WLAN-Gastnetze können den Zugriff verhindern.
 
 ## Auf den ESP32 laden
 
@@ -52,7 +55,7 @@ Boards mit **ESP32-H2 oder ESP32-P4 ohne zusätzliches WLAN** eignen sich für d
 2. Ganz oben im deutlich markierten Abschnitt die Platzhalter für WLAN-Name, WLAN-Passwort, VLC-Passwort und IP-Adresse des VLC-Rechners durch eigene Werte ersetzen. Für andere Boards gegebenenfalls `PIR_PIN` ändern. **Einen so angepassten Sketch mit echten Zugangsdaten nicht auf GitHub hochladen oder weitergeben.**
 3. Das ESP32-Boardpaket installieren und das passende Board sowie den USB-Anschluss auswählen.
 4. Sketch hochladen. Im seriellen Monitor bei **115200 Baud** erscheint die IP-Adresse der Weboberfläche. Diese Adresse im Browser öffnen.
-5. Der Sensor braucht nach dem Start ungefähr 60 Sekunden. Auf der Webseite läuft die Zeit herunter. Danach den Sensor auslösen und VLC prüfen.
+5. Der PIR-Sensor braucht nach dem Start ungefähr 60 Sekunden. Auf der Webseite läuft die Zeit herunter. Danach den Sensor auslösen und VLC prüfen.
 
 Die eingebauten Bibliotheken `WiFi`, `HTTPClient`, `WebServer` und `Preferences` gehören zum ESP32-Boardpaket; weitere Arduino-Bibliotheken sind nicht nötig.
 
@@ -66,17 +69,18 @@ Einstellungen auf der Webseite bleiben nach einem Neustart im Speicher dieses ES
 
 Die ESP-Weboberfläche ist im lokalen Netz ohne Anmeldung erreichbar. VLC und ESP deshalb nur in einem vertrauenswürdigen LAN nutzen und Port 80/8080 nicht ins Internet freigeben. Die Verbindung zu VLC nutzt HTTP; das VLC-Passwort wird im Gerät gespeichert.
 
+Am besten klappt die automatische, wiederholte Steuerung, wenn VLC im Vollbildmodus ist und das Video am Ende ein paar Sekunden schwarz ist. Die Pause-Zeit wird in der Weboberfläche so eingestellt, dass VLC während der schwarzen Frames pausiert wird. Wir der PIR ausgelöst, springt VLC an den Videoanfang und startet die Wiedergabe.
+
 ## Fehlersuche
 
 - **Kein serieller Anschluss:** Datenfähiges USB-Kabel verwenden; gegebenenfalls USB-Seriell-Treiber für das konkrete Board installieren.
 - **Upload startet nicht:** Passendes Board/Port prüfen. Manche Boards benötigen beim Hochladen einen Druck auf **BOOT**.
 - **ESP erreicht WLAN nicht:** WLAN-Name und Passwort prüfen; viele ESP32-Boards benötigen ein 2,4-GHz-Netz.
 - **Webseite erreichbar, VLC nicht:** IP, VLC-Passwort, VLC-Webinterface und Zugriff vom Handy prüfen.
+- **`127.0.0.1:8080` lehnt die Verbindung direkt nach dem Aktivieren ab:** VLC hat das Webinterface möglicherweise erst für den nächsten Start gespeichert. VLC vollständig beenden und neu öffnen. Auf macOS kann es für die laufende Sitzung auch über **Interface hinzufügen → Web** gestartet werden.
 - **PIR löst nicht aus:** 60 Sekunden Startzeit abwarten, Pinbelegung und Ausgangspegel prüfen. Einige PIR-Module haben einen Jumper für Einzel- oder Wiederholungsauslösung.
 
 ## Arduino-ESP32 und GitHub
 
 - [Espressif: Arduino-ESP32 installieren](https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html)
 - [Espressif: Board in der Arduino IDE auswählen](https://docs.espressif.com/projects/arduino-esp32/en/latest/guides/tools_menu.html)
-
-Dieses Paket ist ein Veröffentlichungsentwurf. Vor der Veröffentlichung müssen noch Repository-Name, Eigentümerorganisation und Lizenz festgelegt werden.
